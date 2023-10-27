@@ -48,8 +48,8 @@ jobs:
     runs-on: [aws-netflix]  
     steps:
       - name: Pull the docker image
-        run: docker pull sevenajay/netflix:latest
+        run: docker pull abhijeet0708/netflix:latest
       - name: Trivy image scan
-        run: trivy image sevenajay/netflix:latest
+        run: trivy image abhijeet0708/netflix:latest
       - name: Run the container netflix
-        run: docker run -d --name netflix -p 8081:80 sevenajay/netflix:latest
+        run: docker run -d --name netflix -p 8081:80 abhijeet0708/netflix:latest
