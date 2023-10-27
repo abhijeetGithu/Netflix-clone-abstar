@@ -1,19 +1,20 @@
-name: Build, Analyze, and Scan
+name: Build,Analyze,scan
 
 on:
   push:
     branches:
       - main
 
+
 jobs:
   build-analyze-scan:
-    name: Build and Analyze
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Build and analyze with SonarQube
         uses: sonarsource/sonarqube-scan-action@master
@@ -21,31 +22,30 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: Install trivy
+      - name: install trivy
         run: |
-           # Install trivy
-           apt-get install wget apt-transport-https gnupg lsb-release -y
+           #install trivy
+           sudo apt-get install wget apt-transport-https gnupg lsb-release -y
            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
            echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-           apt-get update
-           apt-get install trivy -y
-        # Add the directory where trivy is installed to the PATH
-        env:
-          PATH: ${{ runner.tool_cache }}/trivy:${{ env.PATH }}
+           sudo apt-get update
+           sudo apt-get install trivy -y
+           #scanning files
+           trivy fs .
 
       - name: Docker build and push
         run: |
-          # Run commands to build and push docker images
+          #run commands to build and push docker images
           docker build --build-arg TMDB_V3_API_KEY=Aj7ay86fe14eca3e76869b92 -t netflix .
           docker tag netflix abhijeet0708/netflix:latest
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker push abhijeet0708/netflix:latest  
         env:
-          DOCKER_CLI_ACI: 1
+          DOCKER_CLI_ACI: 1     
 
-  deploy:
-    needs: build-analyze-scan
-    runs-on: [aws-netflix]
+  deploy:    
+    needs: build-analyze-scan  
+    runs-on: [aws-netflix]  
     steps:
       - name: Pull the docker image
         run: docker pull abhijeet0708/netflix:latest
